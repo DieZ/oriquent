@@ -182,7 +182,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     public function compileDropIfExists(Blueprint $blueprint, Fluent $command) {
-        return 'drop table if exists ' . $this->wrapTable($blueprint);
+        return 'drop class ' . $this->wrapTable($blueprint) . ' if exists';
     }
 
     /**
