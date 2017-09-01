@@ -15,6 +15,14 @@ class Blueprint {
      * @var string
      */
     protected $table;
+    
+    
+    /**
+     * The class the table/schema extends from
+     * 
+     * @var string 
+     */
+    protected $extends = null;
 
     /**
      * The columns that should be added to the table.
@@ -785,6 +793,15 @@ class Blueprint {
     public function getTable() {
         return $this->table;
     }
+    
+    /**
+     * Get the class this table extends from
+     * 
+     * @return string
+     */
+    public function getExtendsFrom() {
+        return $this->extends;
+    }
 
     /**
      * Get the columns that should be added.
@@ -924,6 +941,15 @@ class Blueprint {
      */
     public function any($column) {
         return $this->addColumn('ANY', $column);
+    }
+    
+    /**
+     * Define where the table/class extends from
+     * @param string $class
+     * @return void
+     */
+    public function extend($class) {
+        return; //TODO MTV implement extend function
     }
 
 }

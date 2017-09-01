@@ -52,7 +52,12 @@ class OrientdbGrammar extends Grammar {
        
         // $columns = implode(', ', $this->getColumns($blueprint));
         //$sql = 'create class '.$this->wrapTable($blueprint)." ($columns)";
-        return  $sql = 'create class '.$this->wrapTable($blueprint)." extends V";
+        return  $sql = 'create class '.$this->wrapTable($blueprint).$this->extendsFrom($blueprint);
+    }
+    
+    public function extendsFrom($blueprint) {
+        $ext = $blueprint->getExtendsFrom();
+        return $ext ? " extends \"{$ext}\"" : "";
     }
     
     /**
