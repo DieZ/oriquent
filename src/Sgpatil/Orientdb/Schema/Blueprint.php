@@ -732,12 +732,15 @@ class Blueprint {
      * @return \Illuminate\Support\Fluent
      */
     protected function addColumn($propertyType, $name, array $parameters = array()) {
-
-
+        
         $attributes = array($name => compact('propertyType'));
 
         $this->columns[$name] = compact('propertyType');
 
+        //var_dump($name);
+        //var_dump($this->columns[$name]);
+        //var_dump($attributes);        
+        
         return $attributes;
 
         $attributes = array_merge(compact('propertyType', 'name'), $parameters);
@@ -949,7 +952,8 @@ class Blueprint {
      * @return void
      */
     public function extend($class) {
-        return; //TODO MTV implement extend function
+        $this->extends = $class;
+        return $this;
     }
 
 }

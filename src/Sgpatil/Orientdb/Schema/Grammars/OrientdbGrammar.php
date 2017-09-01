@@ -57,7 +57,7 @@ class OrientdbGrammar extends Grammar {
     
     public function extendsFrom($blueprint) {
         $ext = $blueprint->getExtendsFrom();
-        return $ext ? " extends \"{$ext}\"" : "";
+        return $ext ? " extends {$ext}" : "";
     }
     
     /**
@@ -105,9 +105,11 @@ class OrientdbGrammar extends Grammar {
         $table = $this->wrapTable($blueprint);
 
         $columns = $this->prefixArray('add', $this->getColumns($blueprint));
+        
+        var_dump($columns);
 
         // @TODO: this one may also not work; depreated syntax
-        return 'alter table ' . $table . ' ' . implode(', ', $columns);
+        return 'alter class ' . $table . ' ' . implode(', ', $columns);
     }
 
     /**
@@ -269,7 +271,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeChar(Fluent $column) {
-        return "char({$column->length})";
+        return "char({$column->length})"; // TODO: MV not right, check all types!
     }
 
     /**
@@ -279,7 +281,16 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeString(Fluent $column) {
-        return "varchar({$column->length})";
+        //return "varchar({$column->length})";
+        $q = "STRING";
+        $constrains = array(); // TODO: MV set a generic function for constrains
+        if ($column->length) {
+            $constrains[] = "MAX " . $column->length;
+        }
+        if (count($constrains) > 0) {
+            $q .= "(" . implode(", ", $constrains) . ")";
+        }
+        return $q;
     }
 
     /**
