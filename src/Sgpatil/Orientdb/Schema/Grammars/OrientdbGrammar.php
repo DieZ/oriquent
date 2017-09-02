@@ -106,8 +106,6 @@ class OrientdbGrammar extends Grammar {
 
         $columns = $this->prefixArray('add', $this->getColumns($blueprint));
         
-        var_dump($columns);
-
         // @TODO: this one may also not work; depreated syntax
         return 'alter class ' . $table . ' ' . implode(', ', $columns);
     }
@@ -160,7 +158,10 @@ class OrientdbGrammar extends Grammar {
 
         $table = $this->wrapTable($blueprint);
 
-        return "alter table {$table} add {$type} {$command->index}($columns)";
+        $sql =  "CREATE INDEX {$command->index} ON {$table} ($columns) {$type}";
+
+        return $sql;
+        //return "alter table {$table} add {$type} {$command->index}($columns)";
     }
 
     /**

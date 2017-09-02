@@ -221,7 +221,7 @@ class Migrator {
 	 * @param  string  $path
 	 * @return array
 	 */
-	public function getMigrationFiles($path)
+	public function getMigrationFiles($path) //TODO: MV this is not in line with Illuminate\Database\Migrations\Migrator.php
 	{
 		$files = $this->files->glob($path.'/*_*.php');
 

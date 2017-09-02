@@ -98,13 +98,14 @@ class Builder {
      * @return \Illuminate\Database\Schema\Blueprint
      */
     public function create($table, Closure $callback) {
-        $blueprint = $this->createBlueprint($table, $callback);
+        $blueprint = $this->createBlueprint($table, null); // MV: set to null instead of $callback
         $blueprint->create();
         $callback($blueprint);
         $this->build($blueprint);
         $class = $this->connection->getClient()->makeClass($blueprint->getTable());
         $class->setProperty($blueprint->getColumns());
         $class->saveProperties();
+        $this->finalizeBuild($blueprint); 
     }
 
     /**
@@ -171,6 +172,18 @@ class Builder {
     protected function build(Blueprint $blueprint) {
         $grammar = new \Sgpatil\Orientdb\Schema\Grammars\OrientdbGrammar();
         $blueprint->build($this->connection, $grammar);
+    }
+    
+    /**
+     * Execute the blueprint to build / modify the table
+     * finalizing the build process.
+     *
+     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
+     * @return void
+     */
+    protected function finalizeBuild(Blueprint $blueprint) {
+        $grammar = new \Sgpatil\Orientdb\Schema\Grammars\OrientdbGrammar();
+        $blueprint->finalizeBuild($this->connection, $grammar);
     }
 
     /**

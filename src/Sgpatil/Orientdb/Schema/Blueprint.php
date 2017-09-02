@@ -37,6 +37,14 @@ class Blueprint {
      * @var array
      */
     protected $commands = array();
+    
+    /**
+     * The commands that should be run when finalizing the table
+     * index commands in the case of orientdb
+     * 
+     * @var array
+     */
+    protected $finalCommands = array();
 
     /**
      * The storage engine that should be used for the table.
@@ -67,7 +75,20 @@ class Blueprint {
      * @return void
      */
     public function build(Connection $connection, Grammar $grammar) {
-        foreach ($this->toSql($connection, $grammar) as $statement) {
+        foreach ($this->toSql($connection, $grammar, $this->commands) as $statement) {
+            $connection->statement($statement);
+        }
+    }
+    
+    /**
+     * Execute the blueprint against the database, finalizing the build.
+     *
+     * @param  \Illuminate\Database\Connection  $connection
+     * @param  \Illuminate\Database\Schema\Grammars\Grammar $grammar
+     * @return void
+     */
+    public function finalizeBuild(Connection $connection, Grammar $grammar) {
+        foreach ($this->toSql($connection, $grammar, $this->finalCommands) as $statement) {
             $connection->statement($statement);
         }
     }
@@ -79,17 +100,17 @@ class Blueprint {
      * @param  \Illuminate\Database\Schema\Grammars\Grammar  $grammar
      * @return array
      */
-    public function toSql(Connection $connection, Grammar $grammar) {
-        //$this->addImpliedCommands();
+    public function toSql(Connection $connection, Grammar $grammar, $commands) {
+        //$this->addImpliedCommands(); //TODO: MV why is this commented?
 
         $statements = array();
-
+        
         // Each type of command has a corresponding compiler function on the schema
         // grammar which is used to build the necessary SQL statements to build
         // the blueprint element, so we'll just call that compilers function.
-        foreach ($this->commands as $command) {
+        foreach ($commands as $command) {
             $method = 'compile' . ucfirst($command->name);
-
+            
             if (method_exists($grammar, $method)) {
                 if (!is_null($sql = $grammar->$method($this, $command, $connection))) {
                     $statements = array_merge($statements, (array) $sql);
@@ -707,7 +728,7 @@ class Blueprint {
             $index = $this->createIndexName($type, $columns);
         }
 
-        return $this->addCommand($type, compact('index', 'columns'));
+        return $this->addFinalCommand($type, compact('index', 'columns'));
     }
 
     /**
@@ -773,7 +794,18 @@ class Blueprint {
      */
     protected function addCommand($name, array $parameters = array()) {
         $this->commands[] = $command = $this->createCommand($name, $parameters);
-
+        return $command;
+    }
+    
+    /**
+     * Add a new command to the blueprint.
+     *
+     * @param  string  $name
+     * @param  array  $parameters
+     * @return \Illuminate\Support\Fluent
+     */
+    protected function addFinalCommand($name, array $parameters = array()) {
+        $this->finalCommands[] = $command = $this->createCommand($name, $parameters);
         return $command;
     }
 
