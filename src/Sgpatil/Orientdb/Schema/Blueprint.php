@@ -96,7 +96,7 @@ class Blueprint { //TODO: MV would it be possible to extend from Illuminate\Data
                 }
             }
         }
-        
+
         return $statements;
     }
 
@@ -291,7 +291,7 @@ class Blueprint { //TODO: MV would it be possible to extend from Illuminate\Data
      * @return \Illuminate\Support\Fluent
      */
     public function primary($columns, $name = null) {
-        return $this->indexCommand('primary', $columns, $name);
+        return $this->indexCommand('unique', $columns, $name);
     }
 
     /**
@@ -307,12 +307,13 @@ class Blueprint { //TODO: MV would it be possible to extend from Illuminate\Data
 
     /**
      * Specify an index for the table.
-     *
+     * @deprecated
      * @param  string|array  $columns
      * @param  string  $name
      * @return \Illuminate\Support\Fluent
      */
     public function index($columns, $name = null) {
+        return; // TODO: normal indexing doesn't work
         return $this->indexCommand('index', $columns, $name);
     }
 

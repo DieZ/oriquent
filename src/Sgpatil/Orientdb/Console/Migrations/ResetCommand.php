@@ -71,7 +71,7 @@ class ResetCommand extends BaseCommand {
 				$this->output->writeln($note);
 			}
 
-			if ($count == 0) break;
+			if ($count <= 0) break;
 		}
 	}
 

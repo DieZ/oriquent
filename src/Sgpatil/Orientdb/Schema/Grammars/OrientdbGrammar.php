@@ -190,7 +190,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     public function compileDrop(Blueprint $blueprint, Fluent $command) {
-        return 'drop class ' . $this->wrapTable($blueprint);
+        return 'drop class ' . $this->wrapTable($blueprint) . ' unsafe';
     }
 
     /**
@@ -201,7 +201,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     public function compileDropIfExists(Blueprint $blueprint, Fluent $command) {
-        return 'drop class ' . $this->wrapTable($blueprint) . ' if exists';
+        return 'drop class ' . $this->wrapTable($blueprint) . ' if exists unsafe';
     }
 
     /**
@@ -290,7 +290,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeChar(Fluent $column) {
-        return "char({$column->length})"; // TODO: MV not right, check all types!
+        return "STRING"; // TODO: MV not right, check all types!
     }
 
     /**
@@ -319,7 +319,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeText(Fluent $column) {
-        return 'text';
+        return 'STRING';
     }
 
     /**
@@ -329,7 +329,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeMediumText(Fluent $column) {
-        return 'mediumtext';
+        return 'STRING';
     }
 
     /**
@@ -339,7 +339,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeLongText(Fluent $column) {
-        return 'longtext';
+        return 'STRING';
     }
 
     /**
@@ -349,7 +349,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBigInteger(Fluent $column) {
-        return 'bigint';
+        return 'LONG';
     }
 
     /**
@@ -359,7 +359,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeInteger(Fluent $column) {
-        return 'int';
+        return 'INTEGER';
     }
 
     /**
@@ -369,7 +369,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeMediumInteger(Fluent $column) {
-        return 'mediumint';
+        return 'LONG';
     }
 
     /**
@@ -379,7 +379,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTinyInteger(Fluent $column) {
-        return 'tinyint';
+        return 'SHORT';
     }
 
     /**
@@ -389,7 +389,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeSmallInteger(Fluent $column) {
-        return 'smallint';
+        return 'SHORT';
     }
 
     /**
@@ -399,7 +399,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeFloat(Fluent $column) {
-        return "float({$column->total}, {$column->places})";
+        return "FLOAT";
     }
 
     /**
@@ -409,11 +409,11 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDouble(Fluent $column) {
-        if ($column->total && $column->places) {
+        /*if ($column->total && $column->places) {
             return "double({$column->total}, {$column->places})";
-        }
+        }*/
 
-        return 'double';
+        return 'DOUBLE';
     }
 
     /**
@@ -423,7 +423,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDecimal(Fluent $column) {
-        return "decimal({$column->total}, {$column->places})";
+        return "DECIMAL";
     }
 
     /**
@@ -433,7 +433,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBoolean(Fluent $column) {
-        return 'tinyint(1)';
+        return 'BOOLEAN';
     }
 
     /**
@@ -443,7 +443,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeEnum(Fluent $column) {
-        return "enum('" . implode("', '", $column->allowed) . "')";
+        return "STRING"; // TODO: CHECK!
     }
 
     /**
@@ -453,7 +453,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDate(Fluent $column) {
-        return 'date';
+        return 'DATE';
     }
 
     /**
@@ -463,7 +463,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDateTime(Fluent $column) {
-        return 'datetime';
+        return 'DATETIME';
     }
 
     /**
@@ -473,7 +473,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTime(Fluent $column) {
-        return 'time';
+        return 'DATETIME';
     }
 
     /**
@@ -483,10 +483,10 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTimestamp(Fluent $column) {
-        if (!$column->nullable)
-            return 'timestamp default 0';
+       // if (!$column->nullable)
+            //return 'timestamp default 0';
 
-        return 'timestamp';
+        return 'DATETIME';
     }
 
     /**
@@ -496,7 +496,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBinary(Fluent $column) {
-        return 'blob';
+        return 'BINARY';
     }
 
     /**
