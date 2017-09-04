@@ -67,6 +67,7 @@ class ResetCommand extends BaseCommand {
 			// any instances of the OutputInterface contract passed into the class.
 			foreach ($this->migrator->getNotes() as $note)
 			{
+                                $count--;
 				$this->output->writeln($note);
 			}
 
