@@ -129,8 +129,8 @@ abstract class Grammar extends BaseGrammar {
 			// with turning the column definition into its SQL format for this platform
 			// used by the connection. The column's modifiers are compiled and added.
 			$sql = $this->wrap($column).' '.$this->getType($column);
-
-			$columns[] = $this->addModifiers($sql, $blueprint, $column);
+			
+                        $columns[] = $this->addModifiers($sql, $blueprint, $column);
 		}
 
 		return $columns;
@@ -253,7 +253,7 @@ abstract class Grammar extends BaseGrammar {
 		if ($value instanceof Expression) return $value;
 
 		if (is_bool($value)) return "'".(int) $value."'";
-
+                
 		return "'".strval($value)."'";
 	}
 
