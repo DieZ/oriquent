@@ -31,6 +31,12 @@ class Grammar extends IlluminateGrammar {
             // For the boolean column this need to be un-quote unless orientdb will reject
             return $value ? 'true' : 'false';
         }
+        elseif(is_null($value)) {
+            return 'NULL';
+        }
+        elseif (is_numeric($value)) {
+            return is_int($value) ? (int)$value : (float)$value;
+        }
         elseif(is_array($value) && isset($value['binding']))
         {
             $value = $value['binding'];
