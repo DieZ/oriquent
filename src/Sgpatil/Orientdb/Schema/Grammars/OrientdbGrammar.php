@@ -284,6 +284,16 @@ class OrientdbGrammar extends Grammar {
     }
 
     /**
+     * Create the column definition for an ANY type.
+     *
+     * @param  \Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeAny(Fluent $column) {
+        return "ANY";
+    }
+    
+    /**
      * Create the column definition for a char type.
      *
      * @param  \Illuminate\Support\Fluent  $column
