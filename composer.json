@@ -24,5 +24,12 @@
     	"psr-0": {
 		"Sgpatil\\Orientdb\\": "src/"
 	}
-    }
+    },
+    "extra": {
+      "laravel": {
+          "providers": [
+              "Sgpatil\\Orientdb\\OrientdbServiceProvider"
+          ]
+      }
+  },
 }
