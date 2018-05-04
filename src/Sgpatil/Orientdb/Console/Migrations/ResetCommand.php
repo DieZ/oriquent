@@ -5,7 +5,7 @@ use Illuminate\Console\ConfirmableTrait;
 use Sgpatil\Orientdb\Migrations\Migrator;
 use Symfony\Component\Console\Input\InputOption;
 
-class ResetCommand extends Command {
+class ResetCommand extends BaseCommand {
 
 	use ConfirmableTrait;
 
@@ -55,20 +55,23 @@ class ResetCommand extends Command {
 		$this->migrator->setConnection($this->input->getOption('database'));
 
 		$pretend = $this->input->getOption('pretend');
+                
+                $path = $this->getMigrationPath();
 
 		while (true)
 		{
-			$count = $this->migrator->rollback($pretend);
+			$count = $this->migrator->rollback($path, $pretend);
 
 			// Once the migrator has run we will grab the note output and send it out to
 			// the console screen, since the migrator itself functions without having
 			// any instances of the OutputInterface contract passed into the class.
 			foreach ($this->migrator->getNotes() as $note)
 			{
+                                $count--;
 				$this->output->writeln($note);
 			}
 
-			if ($count == 0) break;
+			if ($count <= 0) break;
 		}
 	}
 

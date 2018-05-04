@@ -154,7 +154,7 @@ class Migrator {
 	 * @param  bool  $pretend
 	 * @return int
 	 */
-	public function rollback($pretend = false)
+	public function rollback($path, $pretend = false)
 	{
 		$this->notes = array();
 
@@ -170,6 +170,8 @@ class Migrator {
 
 			return count($migrations);
 		}
+                
+                $this->requireFiles($path, $files = $this->getMigrationFiles($path));
 
 		// We need to reverse these migrations so that they are "downed" in reverse
 		// to what they run on "up". It lets us backtrack through the migrations
@@ -219,7 +221,7 @@ class Migrator {
 	 * @param  string  $path
 	 * @return array
 	 */
-	public function getMigrationFiles($path)
+	public function getMigrationFiles($path) //TODO: MV this is not in line with Illuminate\Database\Migrations\Migrator.php
 	{
 		$files = $this->files->glob($path.'/*_*.php');
 
@@ -250,7 +252,7 @@ class Migrator {
 	 * @return void
 	 */
 	public function requireFiles($path, array $files)
-	{
+	{       
 		foreach ($files as $file) $this->files->requireOnce($path.'/'.$file.'.php');
 	}
 

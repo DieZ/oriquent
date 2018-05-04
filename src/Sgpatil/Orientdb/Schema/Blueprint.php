@@ -7,7 +7,7 @@ use Illuminate\Support\Fluent;
 use Sgpatil\Orientdb\Connection;
 use Sgpatil\Orientdb\Schema\Grammars\Grammar;
 
-class Blueprint {
+class Blueprint { //TODO: MV would it be possible to extend from Illuminate\Database\Schema\Blueprint? E.g. create an "OrientDBBlueprint extends Blueprint" class?
 
     /**
      * The table the blueprint describes.
@@ -15,6 +15,14 @@ class Blueprint {
      * @var string
      */
     protected $table;
+    
+    
+    /**
+     * The class the table/schema extends from
+     * 
+     * @var string 
+     */
+    protected $extends = null;
 
     /**
      * The columns that should be added to the table.
@@ -29,7 +37,7 @@ class Blueprint {
      * @var array
      */
     protected $commands = array();
-
+    
     /**
      * The storage engine that should be used for the table.
      *
@@ -63,7 +71,7 @@ class Blueprint {
             $connection->statement($statement);
         }
     }
-
+    
     /**
      * Get the raw SQL statements for the blueprint.
      *
@@ -72,16 +80,16 @@ class Blueprint {
      * @return array
      */
     public function toSql(Connection $connection, Grammar $grammar) {
-        //$this->addImpliedCommands();
+        $this->addImpliedCommands();
 
         $statements = array();
-
+        
         // Each type of command has a corresponding compiler function on the schema
         // grammar which is used to build the necessary SQL statements to build
         // the blueprint element, so we'll just call that compilers function.
         foreach ($this->commands as $command) {
             $method = 'compile' . ucfirst($command->name);
-
+            
             if (method_exists($grammar, $method)) {
                 if (!is_null($sql = $grammar->$method($this, $command, $connection))) {
                     $statements = array_merge($statements, (array) $sql);
@@ -283,7 +291,7 @@ class Blueprint {
      * @return \Illuminate\Support\Fluent
      */
     public function primary($columns, $name = null) {
-        return $this->indexCommand('primary', $columns, $name);
+        return $this->indexCommand('unique', $columns, $name);
     }
 
     /**
@@ -299,29 +307,30 @@ class Blueprint {
 
     /**
      * Specify an index for the table.
-     *
+     * @deprecated
      * @param  string|array  $columns
      * @param  string  $name
      * @return \Illuminate\Support\Fluent
      */
     public function index($columns, $name = null) {
+        return; // TODO: normal indexing doesn't work
         return $this->indexCommand('index', $columns, $name);
     }
 
     /**
      * Specify a foreign key for the table.
-     *
+     * 
      * @param  string|array  $columns
      * @param  string  $name
      * @return \Illuminate\Support\Fluent
      */
     public function foreign($columns, $name = null) {
-        return $this->indexCommand('foreign', $columns, $name);
+        return $this->indexCommand('LINK', $columns, $name); // TODO: check if this works...
     }
 
     /**
      * Create a new auto-incrementing integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -331,23 +340,23 @@ class Blueprint {
 
     /**
      * Create a new auto-incrementing big integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
     public function bigIncrements($column) {
-        return $this->unsignedBigInteger($column, true);
+        //return $this->unsignedBigInteger($column, true);
     }
 
     /**
      * Create a new char column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  int  $length
      * @return \Illuminate\Support\Fluent
      */
     public function char($column, $length = 255) {
-        return $this->addColumn('char', $column, compact('length'));
+        //return $this->addColumn('char', $column, compact('length'));
     }
 
     /**
@@ -357,13 +366,14 @@ class Blueprint {
      * @param  int  $length
      * @return \Illuminate\Support\Fluent
      */
-    public function string($column, $length = 255) {
-        return $this->addColumn('STRING', $column, compact('length'));
+    public function string($column, $length = null) {
+        $max = $length;
+        return $this->addColumn('STRING', $column, compact('length', 'max'));
     }
 
     /**
      * Create a new text column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -373,7 +383,7 @@ class Blueprint {
 
     /**
      * Create a new medium text column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -383,7 +393,7 @@ class Blueprint {
 
     /**
      * Create a new long text column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -395,41 +405,39 @@ class Blueprint {
      * Create a new integer column on the table.
      *
      * @param  string  $column
-     * @param  bool  $autoIncrement
-     * @param  bool  $unsigned
      * @return \Illuminate\Support\Fluent
      */
-    public function integer($column, $autoIncrement = false, $unsigned = false) {
-        return $this->addColumn('INTEGER', $column, compact('autoIncrement', 'unsigned'));
+    public function integer($column) {
+        return $this->addColumn('INTEGER', $column);
     }
 
     /**
      * Create a new big integer column on the table.
-     *
+     * @deprecated 
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @param  bool  $unsigned
      * @return \Illuminate\Support\Fluent
      */
     public function bigInteger($column, $autoIncrement = false, $unsigned = false) {
-        return $this->addColumn('bigInteger', $column, compact('autoIncrement', 'unsigned'));
+        //return $this->addColumn('bigInteger', $column, compact('autoIncrement', 'unsigned'));
     }
 
     /**
      * Create a new medium integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @param  bool  $unsigned
      * @return \Illuminate\Support\Fluent
      */
     public function mediumInteger($column, $autoIncrement = false, $unsigned = false) {
-        return $this->addColumn('mediumInteger', $column, compact('autoIncrement', 'unsigned'));
+        //return $this->addColumn('mediumInteger', $column, compact('autoIncrement', 'unsigned'));
     }
 
     /**
      * Create a new tiny integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @param  bool  $unsigned
@@ -441,7 +449,7 @@ class Blueprint {
 
     /**
      * Create a new small integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @param  bool  $unsigned
@@ -455,29 +463,25 @@ class Blueprint {
      * Create a new small integer column on the table.
      *
      * @param  string  $column
-     * @param  bool  $autoIncrement
-     * @param  bool  $unsigned
      * @return \Illuminate\Support\Fluent
      */
-    public function short($column, $length = 255) {
-        return $this->addColumn('SHORT', $column, compact('length'));
+    public function short($column) {
+        return $this->addColumn('SHORT', $column);
     }
 
     /**
      * Create a new Long integer column on the table.
      *
      * @param  string  $column
-     * @param  bool  $autoIncrement
-     * @param  bool  $unsigned
      * @return \Illuminate\Support\Fluent
      */
-    public function long($column, $length = 255) {
-        return $this->addColumn('LONG', $column, compact('length'));
+    public function long($column) {
+        return $this->addColumn('LONG', $column);
     }
 
     /**
      * Create a new unsigned integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @return \Illuminate\Support\Fluent
@@ -488,7 +492,7 @@ class Blueprint {
 
     /**
      * Create a new unsigned big integer column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  bool  $autoIncrement
      * @return \Illuminate\Support\Fluent
@@ -501,36 +505,30 @@ class Blueprint {
      * Create a new float column on the table.
      *
      * @param  string  $column
-     * @param  int     $total
-     * @param  int     $places
      * @return \Illuminate\Support\Fluent
      */
-    public function float($column, $total = 8, $places = 2) {
-        return $this->addColumn('FLOAT', $column, compact('total', 'places'));
+    public function float($column) {
+        return $this->addColumn('FLOAT', $column);
     }
 
     /**
      * Create a new double column on the table.
      *
      * @param  string   $column
-     * @param  int|null	$total
-     * @param  int|null $places
      * @return \Illuminate\Support\Fluent
      */
-    public function double($column, $total = null, $places = null) {
-        return $this->addColumn('DOUBLE', $column, compact('total', 'places'));
+    public function double($column) {
+        return $this->addColumn('DOUBLE', $column);
     }
 
     /**
      * Create a new decimal column on the table.
      *
      * @param  string  $column
-     * @param  int     $total
-     * @param  int     $places
      * @return \Illuminate\Support\Fluent
      */
-    public function decimal($column, $total = 8, $places = 2) {
-        return $this->addColumn('DECIMAL', $column, compact('total', 'places'));
+    public function decimal($column) {
+        return $this->addColumn('DECIMAL', $column);
     }
 
     /**
@@ -545,7 +543,7 @@ class Blueprint {
 
     /**
      * Create a new enum column on the table.
-     *
+     * @deprecated
      * @param  string  $column
      * @param  array   $allowed
      * @return \Illuminate\Support\Fluent
@@ -576,7 +574,7 @@ class Blueprint {
 
     /**
      * Create a new time column on the table.
-     *
+     * @deprecated since version number
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -586,6 +584,7 @@ class Blueprint {
 
     /**
      * Create a new timestamp column on the table.
+     * NOTE: Will create a DATETIME type column!
      *
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
@@ -723,16 +722,15 @@ class Blueprint {
      * @param  array   $parameters
      * @return \Illuminate\Support\Fluent
      */
-    protected function addColumn($propertyType, $name, array $parameters = array()) {
+    protected function addColumn($type, $name, array $parameters = array()) {
+        
+        //$attributes = array($name => compact('propertyType'));
 
+        //$this->columns[$name] = compact('propertyType');
 
-        $attributes = array($name => compact('propertyType'));
+        //return $attributes;
 
-        $this->columns[$name] = compact('propertyType');
-
-        return $attributes;
-
-        $attributes = array_merge(compact('propertyType', 'name'), $parameters);
+        $attributes = array_merge(compact('type', 'name'), $parameters);
 
         $this->columns[] = $column = new Fluent($attributes);
 
@@ -762,10 +760,9 @@ class Blueprint {
      */
     protected function addCommand($name, array $parameters = array()) {
         $this->commands[] = $command = $this->createCommand($name, $parameters);
-
         return $command;
     }
-
+    
     /**
      * Create a new Fluent command.
      *
@@ -784,6 +781,15 @@ class Blueprint {
      */
     public function getTable() {
         return $this->table;
+    }
+    
+    /**
+     * Get the class this table extends from
+     * 
+     * @return string
+     */
+    public function getExtendsFrom() {
+        return $this->extends;
     }
 
     /**
@@ -908,7 +914,7 @@ class Blueprint {
 
     /**
      * Create a new binary column on the table.
-     *
+     * 
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
@@ -917,13 +923,33 @@ class Blueprint {
     }
 
     /**
-     * Create a new binary column on the table.
+     * Create a new ANY column on the table.
      *
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
     public function any($column) {
         return $this->addColumn('ANY', $column);
+    }
+    
+    /**
+     * Create a new TRANSIENT column on the table.
+     *
+     * @param  string  $column
+     * @return \Illuminate\Support\Fluent
+     */
+    public function transient($column) {
+        return $this->addColumn('TRANSIENT', $column);
+    }
+    
+    /**
+     * Define where the table/class extends from
+     * @param string $class
+     * @return void
+     */
+    public function extend($class) {
+        $this->extends = $class;
+        return $this;
     }
 
 }

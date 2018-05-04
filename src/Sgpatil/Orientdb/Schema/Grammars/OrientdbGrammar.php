@@ -13,8 +13,9 @@ class OrientdbGrammar extends Grammar {
      *
      * @var array
      */
-    protected $modifiers = array('Unsigned', 'Nullable', 'Default', 'Increment', 'Comment', 'After');
-
+    //protected $modifiers = array('Unsigned', 'Nullable', 'Default', 'Increment', 'Comment', 'After');
+    protected $modifiers = array("Linkedclass", "Linkedtype", "Min", "Mandatory", "Max", "Name", "Notnull", "Regex", "Type", "Collate", "Readonly", "Custom", "Default");
+    
     /**
      * The possible column serials
      *
@@ -52,11 +53,23 @@ class OrientdbGrammar extends Grammar {
        
         // $columns = implode(', ', $this->getColumns($blueprint));
         //$sql = 'create class '.$this->wrapTable($blueprint)." ($columns)";
-        return  $sql = 'create class '.$this->wrapTable($blueprint)." extends V";
+        
+        $createsql = array();
+        $createsql[] = 'create class '.$this->wrapTable($blueprint).$this->extendsFrom($blueprint);
+        
+        // add columns
+        $createsql[] = $this->compileAdd($blueprint, $command);
+        
+        return implode(";", $createsql);
+    }
+    
+    public function extendsFrom($blueprint) {
+        $ext = $blueprint->getExtendsFrom();
+        return $ext ? " extends {$ext}" : "";
     }
     
     /**
-     * Compile a create table command.
+     * Compile a delete table command.
      *
      * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
      * @param  \Illuminate\Support\Fluent  $command
@@ -99,10 +112,20 @@ class OrientdbGrammar extends Grammar {
     public function compileAdd(Blueprint $blueprint, Fluent $command) {
         $table = $this->wrapTable($blueprint);
 
-        $columns = $this->prefixArray('add', $this->getColumns($blueprint));
-
+        //$columns = $this->prefixArray('add', $this->getColumns($blueprint));
+        $columns = $this->getColumns($blueprint);
+        
+        $sql = array();
+        
+        foreach ($columns as $column) {
+            // create a statement for each column
+            $sql[] = 'CREATE PROPERTY '.$this->wrapTable($blueprint).'.'.$column;
+        }
+        
         // @TODO: this one may also not work; depreated syntax
-        return 'alter table ' . $table . ' ' . implode(', ', $columns);
+        //CREATE PROPERTY User.name STRING (MANDATORY TRUE, MIN 5, MAX 25)
+        //return 'alter class ' . $table . ' ' . implode(', ', $columns);
+        return implode(';',$sql);
     }
 
     /**
@@ -153,7 +176,10 @@ class OrientdbGrammar extends Grammar {
 
         $table = $this->wrapTable($blueprint);
 
-        return "alter table {$table} add {$type} {$command->index}($columns)";
+        $sql =  "CREATE INDEX {$command->index} ON {$table} ($columns) {$type}";
+
+        return $sql;
+        //return "alter table {$table} add {$type} {$command->index}($columns)";
     }
 
     /**
@@ -164,7 +190,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     public function compileDrop(Blueprint $blueprint, Fluent $command) {
-        return 'drop class ' . $this->wrapTable($blueprint);
+        return 'drop class ' . $this->wrapTable($blueprint) . ' unsafe';
     }
 
     /**
@@ -175,7 +201,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     public function compileDropIfExists(Blueprint $blueprint, Fluent $command) {
-        return 'drop table if exists ' . $this->wrapTable($blueprint);
+        return 'drop class ' . $this->wrapTable($blueprint) . ' if exists unsafe';
     }
 
     /**
@@ -258,13 +284,23 @@ class OrientdbGrammar extends Grammar {
     }
 
     /**
+     * Create the column definition for an ANY type.
+     *
+     * @param  \Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeAny(Fluent $column) {
+        return "ANY";
+    }
+    
+    /**
      * Create the column definition for a char type.
      *
      * @param  \Illuminate\Support\Fluent  $column
      * @return string
      */
     protected function typeChar(Fluent $column) {
-        return "char({$column->length})";
+        return "STRING"; // TODO: MV not right, check all types!
     }
 
     /**
@@ -274,7 +310,16 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeString(Fluent $column) {
-        return "varchar({$column->length})";
+        //return "varchar({$column->length})";
+        $q = "STRING";
+        /*$constrains = array(); // TODO: MV set a generic function for constrains
+        if ($column->length) {
+            $constrains[] = "MAX " . $column->length;
+        }
+        if (count($constrains) > 0) {
+            $q .= "(" . implode(", ", $constrains) . ")";
+        }*/
+        return $q;
     }
 
     /**
@@ -284,7 +329,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeText(Fluent $column) {
-        return 'text';
+        return 'STRING';
     }
 
     /**
@@ -294,7 +339,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeMediumText(Fluent $column) {
-        return 'mediumtext';
+        return 'STRING';
     }
 
     /**
@@ -304,7 +349,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeLongText(Fluent $column) {
-        return 'longtext';
+        return 'STRING';
     }
 
     /**
@@ -314,7 +359,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBigInteger(Fluent $column) {
-        return 'bigint';
+        return 'LONG';
     }
 
     /**
@@ -324,7 +369,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeInteger(Fluent $column) {
-        return 'int';
+        return 'INTEGER';
     }
 
     /**
@@ -334,7 +379,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeMediumInteger(Fluent $column) {
-        return 'mediumint';
+        return 'LONG';
     }
 
     /**
@@ -344,7 +389,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTinyInteger(Fluent $column) {
-        return 'tinyint';
+        return 'SHORT';
     }
 
     /**
@@ -354,7 +399,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeSmallInteger(Fluent $column) {
-        return 'smallint';
+        return 'SHORT';
     }
 
     /**
@@ -364,7 +409,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeFloat(Fluent $column) {
-        return "float({$column->total}, {$column->places})";
+        return "FLOAT";
     }
 
     /**
@@ -374,11 +419,11 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDouble(Fluent $column) {
-        if ($column->total && $column->places) {
+        /*if ($column->total && $column->places) {
             return "double({$column->total}, {$column->places})";
-        }
+        }*/
 
-        return 'double';
+        return 'DOUBLE';
     }
 
     /**
@@ -388,7 +433,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDecimal(Fluent $column) {
-        return "decimal({$column->total}, {$column->places})";
+        return "DECIMAL";
     }
 
     /**
@@ -398,7 +443,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBoolean(Fluent $column) {
-        return 'tinyint(1)';
+        return 'BOOLEAN';
     }
 
     /**
@@ -408,7 +453,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeEnum(Fluent $column) {
-        return "enum('" . implode("', '", $column->allowed) . "')";
+        return "STRING"; // TODO: CHECK!
     }
 
     /**
@@ -418,7 +463,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDate(Fluent $column) {
-        return 'date';
+        return 'DATE';
     }
 
     /**
@@ -428,7 +473,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeDateTime(Fluent $column) {
-        return 'datetime';
+        return 'DATETIME';
     }
 
     /**
@@ -438,7 +483,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTime(Fluent $column) {
-        return 'time';
+        return 'DATETIME';
     }
 
     /**
@@ -448,10 +493,10 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeTimestamp(Fluent $column) {
-        if (!$column->nullable)
-            return 'timestamp default 0';
+       // if (!$column->nullable)
+            //return 'timestamp default 0';
 
-        return 'timestamp';
+        return 'DATETIME';
     }
 
     /**
@@ -461,7 +506,7 @@ class OrientdbGrammar extends Grammar {
      * @return string
      */
     protected function typeBinary(Fluent $column) {
-        return 'blob';
+        return 'BINARY';
     }
 
     /**
@@ -472,8 +517,9 @@ class OrientdbGrammar extends Grammar {
      * @return string|null
      */
     protected function modifyUnsigned(Blueprint $blueprint, Fluent $column) {
-        if ($column->unsigned)
-            return ' unsigned';
+        return; // TODO: MV Unsigned mod does not exist in orientDB, raise warning?
+        /*if ($column->unsigned)
+            return ' unsigned';*/
     }
 
     /**
@@ -484,7 +530,24 @@ class OrientdbGrammar extends Grammar {
      * @return string|null
      */
     protected function modifyNullable(Blueprint $blueprint, Fluent $column) {
-        return $column->nullable ? ' null' : ' not null';
+        return $this->modifyNotnull($blueprint, $column);
+    }
+    
+    /**
+     * Get the SQL for a nullable column modifier.
+     *
+     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
+     * @param  \Illuminate\Support\Fluent  $column
+     * @return string|null
+     */
+    protected function modifyNotnull(Blueprint $blueprint, Fluent $column) {
+        if ($column->get('nullable',null) !== null) {
+            return 'NOTNULL '.$column->nullable;
+        }
+        elseif ($column->get('notnull',null) !== null) {
+            return 'NOTNULL '.$column->notnull;
+        }
+        return 'NOTNULL TRUE';
     }
 
     /**
@@ -496,7 +559,7 @@ class OrientdbGrammar extends Grammar {
      */
     protected function modifyDefault(Blueprint $blueprint, Fluent $column) {
         if (!is_null($column->default)) {
-            return " default " . $this->getDefaultValue($column->default);
+            return "DEFAULT " . $this->getDefaultValue($column->default);
         }
     }
 
@@ -508,9 +571,10 @@ class OrientdbGrammar extends Grammar {
      * @return string|null
      */
     protected function modifyIncrement(Blueprint $blueprint, Fluent $column) {
-        if (in_array($column->type, $this->serials) && $column->autoIncrement) {
+        return; // TODO: MV Increment mod does not exist in orientDB, raise warning?
+        /*if (in_array($column->type, $this->serials) && $column->autoIncrement) {
             return ' auto_increment primary key';
-        }
+        }*/
     }
 
     /**
@@ -521,9 +585,10 @@ class OrientdbGrammar extends Grammar {
      * @return string|null
      */
     protected function modifyAfter(Blueprint $blueprint, Fluent $column) {
-        if (!is_null($column->after)) {
+        return; // TODO: MV After mod does not exist in orientDB, raise warning?
+        /*if (!is_null($column->after)) {
             return ' after ' . $this->wrap($column->after);
-        }
+        }*/
     }
 
     /**
@@ -534,9 +599,74 @@ class OrientdbGrammar extends Grammar {
      * @return string|null
      */
     protected function modifyComment(Blueprint $blueprint, Fluent $column) {
-        if (!is_null($column->comment)) {
+        return; // TODO: MV Comment mod does not exist in orientDB, raise warning?
+        /*if (!is_null($column->comment)) {
             return ' comment "' . $column->comment . '"';
+        }*/
+    }
+    
+    protected function modifyCollate(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    protected function modifyCustom(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    protected function modifyLinkedclass(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    protected function modifyLinkedtype(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    protected function modifyMandatory(Blueprint $blueprint, Fluent $column) {
+        if (!is_null($column->mandatory)) {
+            return 'MANDATORY ' . $this->toQueryValue($column->mandatory);;
         }
+    }
+    
+    protected function modifyMax(Blueprint $blueprint, Fluent $column) {
+        if (!is_null($column->max)) {
+            return 'MAX ' . (int) $column->max;
+        }
+    }
+    
+    protected function modifyMin(Blueprint $blueprint, Fluent $column) {
+        if (!is_null($column->min)) {
+            return 'MIN ' . (int) $column->min;
+        }
+    }
+    
+    protected function modifyName(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    protected function modifyReadonly(Blueprint $blueprint, Fluent $column) {
+        if (!is_null($column->readonly)) {
+            return 'READONLY '.$this->toQueryValue($column->readonly);;
+        }
+    }
+    
+    protected function modifyRegex(Blueprint $blueprint, Fluent $column) {
+        if (!is_null($column->regex)) {
+            return 'REGEX '.$this->toQueryValue($column->regex);
+        }
+    }
+    
+    protected function modifyType(Blueprint $blueprint, Fluent $column) {
+        // TODO: MV implement
+    }
+    
+    private function toQueryValue($value) {
+        if (is_bool($value)) {
+            return $value ? "TRUE" : "FALSE";
+        }
+        if (strtolower($value) == "null") {
+            return "NULL";
+        }
+        return '"'.$value.'"';
     }
 
     /**
@@ -551,5 +681,49 @@ class OrientdbGrammar extends Grammar {
         return $value;
         return '`' . str_replace('`', '``', $value) . '`';
     }
+    
+    	/**
+	 * Add the column modifiers to the definition.
+         * Overwritten from parent Grammer
+	 *
+	 * @param  string  $sql
+	 * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
+	 * @param  \Illuminate\Support\Fluent  $column
+	 * @return string
+	 */
+	protected function addModifiers($sql, Blueprint $blueprint, Fluent $column)
+	{
+		$modifiers = array();
+                foreach ($this->modifiers as $modifier)
+		{
+			if (method_exists($this, $method = "modify{$modifier}"))
+			{
+				$result = $this->{$method}($blueprint, $column);
+                                if ($result) $modifiers[] = $result;
+			}
+		}
+                
+                if (count($modifiers) > 0) {
+                    $sql.= " (".implode(", ",$modifiers).")";
+                }
+
+		return $sql;
+	}
+        
+        /**
+	 * Format a value so that it can be used in "default" clauses.
+         * Overwritten from parent
+	 *
+	 * @param  mixed   $value
+	 * @return string
+	 */
+	protected function getDefaultValue($value)
+	{
+		//if (is_bool($value)) return "'".(int) $value."'";
+                if (is_bool($value)) return $value ? "TRUE" : "FALSE";
+                
+                // else return what parent does:
+                return parent::getDefaultValue($value);
+	}
 
 }

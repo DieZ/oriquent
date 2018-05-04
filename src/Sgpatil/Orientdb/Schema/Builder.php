@@ -98,13 +98,22 @@ class Builder {
      * @return \Illuminate\Database\Schema\Blueprint
      */
     public function create($table, Closure $callback) {
-        $blueprint = $this->createBlueprint($table, $callback);
+        /*$blueprint = $this->createBlueprint($table, null); // MV: set to null instead of $callback
         $blueprint->create();
         $callback($blueprint);
         $this->build($blueprint);
         $class = $this->connection->getClient()->makeClass($blueprint->getTable());
+        var_dump($blueprint->getColumns());
         $class->setProperty($blueprint->getColumns());
         $class->saveProperties();
+        $this->finalizeBuild($blueprint);*/
+        
+        // TAKEN FROM Illuminate:
+        $this->build(tap($this->createBlueprint($table), function ($blueprint) use ($callback) {
+            $blueprint->create();
+
+            $callback($blueprint);
+        }));
     }
 
     /**
@@ -129,10 +138,6 @@ class Builder {
      */
     public function drop($table) {
         $blueprint = $this->createBlueprint($table);
-        // Delete Vertex
-        $blueprint->delete();
-        $this->build($blueprint);
-        // Drop Class
         $blueprint->drop();
         $this->build($blueprint);
     }
@@ -171,6 +176,18 @@ class Builder {
     protected function build(Blueprint $blueprint) {
         $grammar = new \Sgpatil\Orientdb\Schema\Grammars\OrientdbGrammar();
         $blueprint->build($this->connection, $grammar);
+    }
+
+    /**
+     * Execute the blueprint to build / modify the table
+     * finalizing the build process.
+     *
+     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
+     * @return void
+     */
+    protected function finalizeBuild(Blueprint $blueprint) {
+        $grammar = new \Sgpatil\Orientdb\Schema\Grammars\OrientdbGrammar();
+        $blueprint->finalizeBuild($this->connection, $grammar);
     }
 
     /**
